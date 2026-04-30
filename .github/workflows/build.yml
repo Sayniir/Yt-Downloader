@@ -1,0 +1,49 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11' # Changez si vous utilisez une autre version
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller "YouTube Downloader.spec"
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: YouTube-Downloader-${{ runner.os }}
+        path: dist/
